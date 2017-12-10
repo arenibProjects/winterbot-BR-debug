@@ -6,7 +6,7 @@ displayer.map.Map = class Map extends displayer.Frame{
 	constructor() {
 		super();
 		let that = this;
-		this.element.className="card z-depth-3";
+		this.element.className="card z-depth-3 grey darken-4 white-text";
 		this.objects = {};
 		this.classes = {Shape:displayer.map.Shape,BigRobot:displayer.map.BigRobot,SmallRobot:displayer.map.SmallRobot}
 		this.bg = new Image();

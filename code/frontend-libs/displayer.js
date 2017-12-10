@@ -16,6 +16,13 @@ displayer.Frame = class Frame{
 		}
 		this.element.removeChild(child.element);
 	}
+	get hidden(){
+		return this.element.style.display=="none";
+	}
+	set hidden(h){
+		if(h)this.element.style.display="none";
+		else this.element.style.display="";
+	}
 }
 displayer.Row = class Row extends displayer.Frame{
 	constructor(){
