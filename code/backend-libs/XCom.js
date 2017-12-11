@@ -14,49 +14,22 @@ function convertArrayBufferToString(buf) {
 
 class XCom{
 	constructor(){
-		this.refresh();
-	}
-	refresh(){
 		var that=this;
 		this.ports=[];
 		this.names={};
 		this.eventEmitter = new EventEmitter();
 		console.log("go");
-		chrome.serial.getDevices((ports)=>{
-			console.log(ports);
-			var promises=[];
-			for (var i in ports) {
-				promises.push(
-					new Promise((res,rej)=>chrome.serial.connect(ports[i].path, {bitrate:9600}, res)) //connect
-					.then((connectionInfo)=>connectionInfo.connectionId) // filter id
-				);
-			}
-			Promise.all(promises).then(values=>{
-				this.ports=values;
-				console.log(this.ports);
-				this.eventEmitter.emit('refresh',true);
-			});// list all open ports
-		});
+		
+		this.refresh();
 		
 		this.onRefresh = ()=>{
 			that.lines={};
-			for(var i in that.ports) that.lines[that.ports[i]]="";
+			for(var i in that.ports){
+				that.lines[that.ports[i]]="";
+				that.send(["AYR"],that.ports[i]); //are you ready
+			}
 		};//(re)create the line pool
-		/*this.onReady = ()=>{
-			chrome.serial.onReceive.addListener(function(info){
-				if (info.data) {
-					var str = convertArrayBufferToString(info.data);
-					console.log(str);
-					if (str.charAt(str.length-1) === '\n') {
-						that.lines[info.connectionId] += str.substring(0, str.length-1);
-						that.commandInput(that.lines[info.connectionId].replace("\r","").split(" "),info.connectionId);
-						that.lines[info.connectionId] = '';
-					} else {
-						that.lines[info.connectionId] += str;
-					}
-				}
-			}); 
-		};//line reading and buffering*/
+		
 		this.onReady = ()=>{
 			chrome.serial.onReceive.addListener(function(info){
 				if (info.data) {
@@ -71,6 +44,16 @@ class XCom{
 				}
 			}); 
 		};//line reading and buffering
+	}
+	async refresh(){
+		var ports = await new Promise((res,rej)=>chrome.serial.getDevices(res));
+		console.log(ports);
+		var portsCon = await Promise.all(
+			ports.map(port=>new Promise((res,rej)=>chrome.serial.connect(port.path, {bitrate:port.productId==1155?250000:9600}, res)))
+		);// connect to all ports
+		this.ports=portsCon.map((i)=>i.connectionId);// filter id
+		console.log(this.ports);
+		this.eventEmitter.emit('refresh',true);
 	}
 	commandInput(com,con){
 		console.log(com);
